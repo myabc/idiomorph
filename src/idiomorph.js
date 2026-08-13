@@ -124,6 +124,80 @@ var Idiomorph = (function () {
   //=============================================================================
 
   const noOp = () => {};
+
+  //=============================================================================
+  // Realm-safe node type checks.
+  //
+  // `instanceof Node` (and friends) fails for nodes created in another JS
+  // realm (e.g. an iframe's document), even after they are adopted into this
+  // document, because each realm has its own constructors. These helpers
+  // duck-type nodes via `nodeType` and `localName` instead, so nodes from any
+  // realm are recognized.
+  //=============================================================================
+
+  /**
+   * @param {any} value
+   * @returns {value is Node}
+   */
+  function isNode(value) {
+    return typeof value?.nodeType === "number";
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is Element}
+   */
+  function isElement(value) {
+    return value?.nodeType === Node.ELEMENT_NODE;
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is Document}
+   */
+  function isDocument(value) {
+    return value?.nodeType === Node.DOCUMENT_NODE;
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is HTMLTemplateElement}
+   */
+  function isTemplateElement(value) {
+    return isElement(value) && value.localName === "template";
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is HTMLHeadElement}
+   */
+  function isHeadElement(value) {
+    return isElement(value) && value.localName === "head";
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is HTMLInputElement}
+   */
+  function isInputElement(value) {
+    return isElement(value) && value.localName === "input";
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is HTMLOptionElement}
+   */
+  function isOptionElement(value) {
+    return isElement(value) && value.localName === "option";
+  }
+
+  /**
+   * @param {any} value
+   * @returns {value is HTMLTextAreaElement}
+   */
+  function isTextAreaElement(value) {
+    return isElement(value) && value.localName === "textarea";
+  }
   /**
    * Default configuration values, updatable by users now
    * @type {ConfigInternal}
@@ -286,10 +360,7 @@ var Idiomorph = (function () {
       endPoint = null,
     ) {
       // normalize
-      if (
-        oldParent instanceof HTMLTemplateElement &&
-        newParent instanceof HTMLTemplateElement
-      ) {
+      if (isTemplateElement(oldParent) && isTemplateElement(newParent)) {
         // @ts-ignore we can pretend the DocumentFragment is an Element
         oldParent = oldParent.content;
         // @ts-ignore ditto
@@ -319,7 +390,7 @@ var Idiomorph = (function () {
         }
 
         // if the matching node is elsewhere in the original content
-        if (newChild instanceof Element) {
+        if (isElement(newChild)) {
           // we can pretend the id is non-null because the next `.has` line will reject it if not
           const newChildId = /** @type {String} */ (
             newChild.getAttribute("id")
@@ -647,12 +718,9 @@ var Idiomorph = (function () {
         return oldNode;
       }
 
-      if (oldNode instanceof HTMLHeadElement && ctx.head.style === "none") {
+      if (isHeadElement(oldNode) && ctx.head.style === "none") {
         // ignore the head element
-      } else if (
-        oldNode instanceof HTMLHeadElement &&
-        ctx.head.style !== "morph"
-      ) {
+      } else if (isHeadElement(oldNode) && ctx.head.style !== "morph") {
         // ok to cast: if newContent wasn't also a <head>, it would've got caught in the `!isSoftMatch` branch above
         handleHeadElement(
           oldNode,
@@ -742,8 +810,8 @@ var Idiomorph = (function () {
      */
     function syncInputValue(oldElement, newElement, ctx) {
       if (
-        oldElement instanceof HTMLInputElement &&
-        newElement instanceof HTMLInputElement &&
+        isInputElement(oldElement) &&
+        isInputElement(newElement) &&
         newElement.type !== "file"
       ) {
         let newValue = newElement.value;
@@ -766,14 +834,11 @@ var Idiomorph = (function () {
         }
         // TODO: QUESTION(1cg): this used to only check `newElement` unlike the other branches -- why?
         // did I break something?
-      } else if (
-        oldElement instanceof HTMLOptionElement &&
-        newElement instanceof HTMLOptionElement
-      ) {
+      } else if (isOptionElement(oldElement) && isOptionElement(newElement)) {
         syncBooleanAttribute(oldElement, newElement, "selected", ctx);
       } else if (
-        oldElement instanceof HTMLTextAreaElement &&
-        newElement instanceof HTMLTextAreaElement
+        isTextAreaElement(oldElement) &&
+        isTextAreaElement(newElement)
       ) {
         let newValue = newElement.value;
         let oldValue = oldElement.value;
@@ -1241,7 +1306,7 @@ var Idiomorph = (function () {
      * @returns {Element}
      */
     function normalizeElement(content) {
-      if (content instanceof Document) {
+      if (isDocument(content)) {
         return content.documentElement;
       } else {
         // a Text or Comment node is not an Element, but morphOuterHTML only ever reads Node members off it
@@ -1264,7 +1329,7 @@ var Idiomorph = (function () {
       ) {
         // the template tag created by idiomorph parsing can serve as a dummy parent
         return /** @type {Element} */ (newContent);
-      } else if (newContent instanceof Node) {
+      } else if (isNode(newContent)) {
         if (newContent.parentNode) {
           // we can't use the parent directly because newContent may have siblings
           // that we don't want in the morph, and reparenting might be expensive (TODO is it?),
@@ -1324,7 +1389,7 @@ var Idiomorph = (function () {
        */
       querySelectorAll(selector) {
         return this.childNodes.reduce((results, node) => {
-          if (node instanceof Element) {
+          if (isElement(node)) {
             if (node.matches(selector)) results.push(node);
             const nodeList = node.querySelectorAll(selector);
             for (let i = 0; i < nodeList.length; i++) {
