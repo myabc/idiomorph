@@ -142,6 +142,27 @@ describe("Core morphing tests", function () {
     initial.value.should.equal("Bar");
   });
 
+  it("morphs children of an SVG-namespace template element normally", function () {
+    let initial = make("<div><svg><template><g></g></template></svg></div>");
+    let finalSrc = "<div><svg><template><rect></rect></template></svg></div>";
+    Idiomorph.morph(initial, finalSrc);
+    initial.outerHTML.should.equal(finalSrc);
+  });
+
+  it("morphs non-HTML-namespace head elements normally", function () {
+    let parse = (str) =>
+      new DOMParser().parseFromString(str, "text/xml").documentElement;
+    let initial = parse(
+      '<opml><head lang="a"><title>Old</title></head></opml>',
+    );
+    let final = parse('<opml><head lang="b"><title>New</title></head></opml>');
+    Idiomorph.morph(initial.firstChild, final.firstChild, {
+      morphStyle: "outerHTML",
+    });
+    initial.firstChild.getAttribute("lang").should.equal("b");
+    initial.firstChild.firstChild.textContent.should.equal("New");
+  });
+
   it("ignores head element from another document when head.style is none", function () {
     let iframe = document.createElement("iframe");
     getWorkArea().append(iframe);

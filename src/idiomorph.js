@@ -136,15 +136,15 @@ var Idiomorph = (function () {
   //=============================================================================
 
   /**
-   * @param {any} value
+   * @param {unknown} value
    * @returns {value is Node}
    */
   function isNode(value) {
-    return typeof value?.nodeType === "number";
+    return typeof (/** @type {any} */ (value)?.nodeType) === "number";
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is Element}
    */
   function isElement(value) {
@@ -152,51 +152,66 @@ var Idiomorph = (function () {
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is Document}
    */
   function isDocument(value) {
     return value?.nodeType === Node.DOCUMENT_NODE;
   }
 
+  const HTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
+
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
+   * @param {string} localName
+   * @returns {value is Element}
+   */
+  function isHtmlElement(value, localName) {
+    return (
+      isElement(value) &&
+      value.localName === localName &&
+      value.namespaceURI === HTML_NAMESPACE
+    );
+  }
+
+  /**
+   * @param {Node | null | undefined} value
    * @returns {value is HTMLTemplateElement}
    */
   function isTemplateElement(value) {
-    return isElement(value) && value.localName === "template";
+    return isHtmlElement(value, "template");
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is HTMLHeadElement}
    */
   function isHeadElement(value) {
-    return isElement(value) && value.localName === "head";
+    return isHtmlElement(value, "head");
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is HTMLInputElement}
    */
   function isInputElement(value) {
-    return isElement(value) && value.localName === "input";
+    return isHtmlElement(value, "input");
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is HTMLOptionElement}
    */
   function isOptionElement(value) {
-    return isElement(value) && value.localName === "option";
+    return isHtmlElement(value, "option");
   }
 
   /**
-   * @param {any} value
+   * @param {Node | null | undefined} value
    * @returns {value is HTMLTextAreaElement}
    */
   function isTextAreaElement(value) {
-    return isElement(value) && value.localName === "textarea";
+    return isHtmlElement(value, "textarea");
   }
   /**
    * Default configuration values, updatable by users now
