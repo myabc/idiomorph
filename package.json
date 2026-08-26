@@ -5,6 +5,7 @@
     "HTML"
   ],
   "version": "0.7.4",
+  "type": "module",
   "homepage": "https://github.com/bigskysoftware/idiomorph",
   "bugs": {
     "url": "https://github.com/bigskysoftware/idiomorph/issues"
@@ -37,9 +38,9 @@
     "test:firefox": "web-test-runner --concurrency 1 --playwright --browsers firefox",
     "test:webkit": "web-test-runner --playwright --browsers webkit",
     "test:all": "web-test-runner --concurrency 1 --playwright --browsers chromium firefox webkit",
-    "test:ci": "npm run typecheck && npm run format:check && npm run test:all -- --fail-only && node test/lib/ensure-full-coverage.js",
-    "test:coverage": "npm run test:chrome && node test/lib/ensure-full-coverage.js",
-    "perf": "playwright install chromium && node perf/runner.js",
+    "test:ci": "npm run typecheck && npm run format:check && npm run test:all -- --fail-only && node test/lib/ensure-full-coverage.cjs",
+    "test:coverage": "npm run test:chrome && node test/lib/ensure-full-coverage.cjs",
+    "perf": "playwright install chromium && node perf/runner.cjs",
 
     "dist": "cp -r src/* dist/ && npm run-script ext && npm run-script esm && npm run-script types && npm run-script uglify && npm run-script gzip && exit",
     "ext": "cat src/idiomorph.js src/idiomorph-htmx.js > dist/idiomorph-ext.js",
