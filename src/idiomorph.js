@@ -140,7 +140,10 @@ var Idiomorph = (function () {
    * @returns {value is Node}
    */
   function isNode(value) {
-    return typeof (/** @type {any} */ (value)?.nodeType) === "number";
+    return (
+      value instanceof Node ||
+      typeof (/** @type {any} */ (value)?.nodeType) === "number"
+    );
   }
 
   /**
@@ -148,7 +151,7 @@ var Idiomorph = (function () {
    * @returns {value is Element}
    */
   function isElement(value) {
-    return value?.nodeType === Node.ELEMENT_NODE;
+    return value instanceof Element || value?.nodeType === Node.ELEMENT_NODE;
   }
 
   /**
@@ -156,7 +159,7 @@ var Idiomorph = (function () {
    * @returns {value is Document}
    */
   function isDocument(value) {
-    return value?.nodeType === Node.DOCUMENT_NODE;
+    return value instanceof Document || value?.nodeType === Node.DOCUMENT_NODE;
   }
 
   const HTML_NAMESPACE = "http://www.w3.org/1999/xhtml";

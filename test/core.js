@@ -67,6 +67,17 @@ describe("Core morphing tests", function () {
     initial.outerHTML.should.equal("<button>Bar</button>");
   });
 
+  it("recognizes newContent as a node even when a child input shadows its properties", function () {
+    let parent = make('<div><form><input name="nodeType"></form></div>');
+    let final = make(
+      '<form><input name="nodeType"><input name="other"></form>',
+    );
+    Idiomorph.morph(parent, final, { morphStyle: "innerHTML" });
+    parent.innerHTML.should.equal(
+      '<form><input name="nodeType"><input name="other"></form>',
+    );
+  });
+
   it("morphs outerHTML as content properly when argument is a node from another document", function () {
     let initial = make("<button>Foo</button>");
     let iframe = document.createElement("iframe");
