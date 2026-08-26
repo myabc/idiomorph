@@ -21,6 +21,28 @@ describe("Option to forcibly restore focus after morph", function () {
   }
 
   describe("defaults to on", function () {
+    it("restores focus and selection state when morphing inside another document", function () {
+      let iframe = document.createElement("iframe");
+      getWorkArea().append(iframe);
+      let foreignDocument = iframe.contentDocument;
+      foreignDocument.body.innerHTML = `<input type="text" id="focused" value="abc"><input type="text" id="other">`;
+      let input = foreignDocument.getElementById("focused");
+      input.focus();
+      input.setSelectionRange(1, 2);
+      foreignDocument.body.moveBefore = undefined;
+
+      Idiomorph.morph(
+        foreignDocument.body,
+        `<input type="text" id="other"><input type="text" id="focused" value="abc">`,
+        { morphStyle: "innerHTML" },
+      );
+
+      let focused = foreignDocument.getElementById("focused");
+      (foreignDocument.activeElement === focused).should.equal(true);
+      focused.selectionStart.should.equal(1);
+      focused.selectionEnd.should.equal(2);
+    });
+
     it("restores focus and selection state with outerHTML morphStyle", function () {
       const div = make(`
         <div>

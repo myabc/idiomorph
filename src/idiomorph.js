@@ -302,18 +302,15 @@ var Idiomorph = (function () {
    */
   function saveAndRestoreFocus(ctx, fn) {
     if (!ctx.config.restoreFocus) return fn();
+    // focus lives in the target's document, which may not be ours
+    const doc = ctx.target.ownerDocument;
     let activeElement =
       /** @type {HTMLInputElement|HTMLTextAreaElement|null} */ (
-        document.activeElement
+        doc.activeElement
       );
 
     // don't bother if the active element is not an input or textarea
-    if (
-      !(
-        activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement
-      )
-    ) {
+    if (!(isInputElement(activeElement) || isTextAreaElement(activeElement))) {
       return fn();
     }
 
@@ -323,7 +320,7 @@ var Idiomorph = (function () {
 
     if (
       activeElementId &&
-      activeElementId !== document.activeElement?.getAttribute("id")
+      activeElementId !== doc.activeElement?.getAttribute("id")
     ) {
       activeElement = ctx.target.querySelector(
         `[id="${CSS.escape(activeElementId)}"]`,
