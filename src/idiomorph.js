@@ -84,7 +84,7 @@
  * @callback Morph
  *
  * @param {Element | Document} oldNode
- * @param {Element | Node | HTMLCollection | Node[] | string | null} newContent
+ * @param {Node | HTMLCollection | Node[] | string | null} newContent
  * @param {Config} [config]
  * @returns {Promise<Node[]> | Node[]}
  */
@@ -149,7 +149,7 @@ var Idiomorph = (function () {
    * Core idiomorph function for morphing one DOM tree to another
    *
    * @param {Element | Document} oldNode
-   * @param {Element | Node | HTMLCollection | Node[] | string | null} newContent
+   * @param {Node | HTMLCollection | Node[] | string | null} newContent
    * @param {Config} [config]
    * @returns {Promise<Node[]> | Node[]}
    */
@@ -1228,7 +1228,7 @@ var Idiomorph = (function () {
 
     /**
      *
-     * @param {null | string | Node | HTMLCollection | Node[] | Document & {generatedByIdiomorph:boolean}} newContent
+     * @param {null | string | Node | HTMLCollection | Node[]} newContent
      * @returns {Element}
      */
     function normalizeParent(newContent) {
