@@ -1,4 +1,4 @@
-const lcovParse = require("lcov-parse");
+import lcovParse from "lcov-parse";
 
 lcovParse("coverage/lcov.info", (err, data) => {
   if (err) {

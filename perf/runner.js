@@ -1,7 +1,6 @@
-const { spawnSync } = require("child_process");
-const { chromium } = require("playwright");
-const fs = require("fs");
-const path = require("path");
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import { chromium } from "playwright";
 
 let benchmarks = process.argv.slice(2);
 let versus;
@@ -18,7 +17,7 @@ if (
 
 if (benchmarks.length === 0) {
   benchmarks = fs
-    .readdirSync(`${__dirname}/benchmarks`)
+    .readdirSync(new URL("benchmarks", import.meta.url))
     .map((file) => file.split(".")[0]) // Remove file extension
     .filter((name, i, self) => i === self.indexOf(name)); // Remove duplicates
 }
@@ -47,7 +46,7 @@ benchmarks.forEach((benchmark) => {
     ],
   };
   fs.writeFileSync(
-    path.resolve(__dirname, "../tmp/tachometer.json"),
+    new URL("../tmp/tachometer.json", import.meta.url),
     JSON.stringify(config),
     "utf8",
   );
