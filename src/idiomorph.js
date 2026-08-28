@@ -124,98 +124,6 @@ var Idiomorph = (function () {
   //=============================================================================
 
   const noOp = () => {};
-
-  //=============================================================================
-  // Realm-safe node type checks.
-  //
-  // `instanceof Node` (and friends) fails for nodes created in another JS
-  // realm (e.g. an iframe's document), even after they are adopted into this
-  // document, because each realm has its own constructors. These helpers
-  // duck-type nodes via `nodeType` and `localName` instead, so nodes from any
-  // realm are recognized.
-  //=============================================================================
-
-  /**
-   * @param {unknown} value
-   * @returns {value is Node}
-   */
-  function isNode(value) {
-    return (
-      value instanceof Node ||
-      typeof (/** @type {any} */ (value)?.nodeType) === "number"
-    );
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is Element}
-   */
-  function isElement(value) {
-    return value instanceof Element || value?.nodeType === Node.ELEMENT_NODE;
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is Document}
-   */
-  function isDocument(value) {
-    return value instanceof Document || value?.nodeType === Node.DOCUMENT_NODE;
-  }
-
-  const HTML_NAMESPACE = "http://www.w3.org/1999/xhtml";
-
-  /**
-   * @param {Node | null | undefined} value
-   * @param {string} localName
-   * @returns {value is Element}
-   */
-  function isHtmlElement(value, localName) {
-    return (
-      isElement(value) &&
-      value.localName === localName &&
-      value.namespaceURI === HTML_NAMESPACE
-    );
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is HTMLTemplateElement}
-   */
-  function isTemplateElement(value) {
-    return isHtmlElement(value, "template");
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is HTMLHeadElement}
-   */
-  function isHeadElement(value) {
-    return isHtmlElement(value, "head");
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is HTMLInputElement}
-   */
-  function isInputElement(value) {
-    return isHtmlElement(value, "input");
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is HTMLOptionElement}
-   */
-  function isOptionElement(value) {
-    return isHtmlElement(value, "option");
-  }
-
-  /**
-   * @param {Node | null | undefined} value
-   * @returns {value is HTMLTextAreaElement}
-   */
-  function isTextAreaElement(value) {
-    return isHtmlElement(value, "textarea");
-  }
   /**
    * Default configuration values, updatable by users now
    * @type {ConfigInternal}
@@ -310,7 +218,9 @@ var Idiomorph = (function () {
       );
 
     // don't bother if the active element is not an input or textarea
-    if (!(isInputElement(activeElement) || isTextAreaElement(activeElement))) {
+    if (
+      !(is.inputElement(activeElement) || is.textAreaElement(activeElement))
+    ) {
       return fn();
     }
 
@@ -375,7 +285,7 @@ var Idiomorph = (function () {
       endPoint = null,
     ) {
       // normalize
-      if (isTemplateElement(oldParent) && isTemplateElement(newParent)) {
+      if (is.templateElement(oldParent) && is.templateElement(newParent)) {
         // @ts-ignore we can pretend the DocumentFragment is an Element
         oldParent = oldParent.content;
         // @ts-ignore ditto
@@ -405,7 +315,7 @@ var Idiomorph = (function () {
         }
 
         // if the matching node is elsewhere in the original content
-        if (isElement(newChild)) {
+        if (is.element(newChild)) {
           // we can pretend the id is non-null because the next `.has` line will reject it if not
           const newChildId = /** @type {String} */ (
             newChild.getAttribute("id")
@@ -733,9 +643,9 @@ var Idiomorph = (function () {
         return oldNode;
       }
 
-      if (isHeadElement(oldNode) && ctx.head.style === "none") {
+      if (is.headElement(oldNode) && ctx.head.style === "none") {
         // ignore the head element
-      } else if (isHeadElement(oldNode) && ctx.head.style !== "morph") {
+      } else if (is.headElement(oldNode) && ctx.head.style !== "morph") {
         // ok to cast: if newContent wasn't also a <head>, it would've got caught in the `!isSoftMatch` branch above
         handleHeadElement(
           oldNode,
@@ -825,8 +735,8 @@ var Idiomorph = (function () {
      */
     function syncInputValue(oldElement, newElement, ctx) {
       if (
-        isInputElement(oldElement) &&
-        isInputElement(newElement) &&
+        is.inputElement(oldElement) &&
+        is.inputElement(newElement) &&
         newElement.type !== "file"
       ) {
         let newValue = newElement.value;
@@ -849,11 +759,11 @@ var Idiomorph = (function () {
         }
         // TODO: QUESTION(1cg): this used to only check `newElement` unlike the other branches -- why?
         // did I break something?
-      } else if (isOptionElement(oldElement) && isOptionElement(newElement)) {
+      } else if (is.optionElement(oldElement) && is.optionElement(newElement)) {
         syncBooleanAttribute(oldElement, newElement, "selected", ctx);
       } else if (
-        isTextAreaElement(oldElement) &&
-        isTextAreaElement(newElement)
+        is.textAreaElement(oldElement) &&
+        is.textAreaElement(newElement)
       ) {
         let newValue = newElement.value;
         let oldValue = oldElement.value;
@@ -1321,7 +1231,7 @@ var Idiomorph = (function () {
      * @returns {Element}
      */
     function normalizeElement(content) {
-      if (isDocument(content)) {
+      if (is.document(content)) {
         return content.documentElement;
       } else {
         // a Text or Comment node is not an Element, but morphOuterHTML only ever reads Node members off it
@@ -1344,7 +1254,7 @@ var Idiomorph = (function () {
       ) {
         // the template tag created by idiomorph parsing can serve as a dummy parent
         return /** @type {Element} */ (newContent);
-      } else if (isNode(newContent)) {
+      } else if (is.node(newContent)) {
         if (newContent.parentNode) {
           // we can't use the parent directly because newContent may have siblings
           // that we don't want in the morph, and reparenting might be expensive (TODO is it?),
@@ -1404,7 +1314,7 @@ var Idiomorph = (function () {
        */
       querySelectorAll(selector) {
         return this.childNodes.reduce((results, node) => {
-          if (isElement(node)) {
+          if (is.element(node)) {
             if (node.matches(selector)) results.push(node);
             const nodeList = node.querySelectorAll(selector);
             for (let i = 0; i < nodeList.length; i++) {
@@ -1494,6 +1404,46 @@ var Idiomorph = (function () {
     }
 
     return { normalizeElement, normalizeParent };
+  })();
+
+  //=============================================================================
+  // Realm-safe node type checks
+  //=============================================================================
+  const is = (function () {
+    /** @param {Node | null | undefined} value @returns {value is Element} */
+    const element = (value) =>
+      value instanceof Element || value?.nodeType === Node.ELEMENT_NODE;
+
+    /**
+     * @param {Node | null | undefined} value
+     * @param {string} localName
+     * @returns {value is Element}
+     */
+    const htmlElement = (value, localName) =>
+      element(value) &&
+      value.localName === localName &&
+      value.namespaceURI === "http://www.w3.org/1999/xhtml";
+
+    return {
+      element,
+      /** @param {unknown} value @returns {value is Node} */
+      node: (value) =>
+        value instanceof Node ||
+        typeof (/** @type {any} */ (value)?.nodeType) === "number",
+      /** @param {Node | null | undefined} value @returns {value is Document} */
+      document: (value) =>
+        value instanceof Document || value?.nodeType === Node.DOCUMENT_NODE,
+      /** @param {Node | null | undefined} value @returns {value is HTMLTemplateElement} */
+      templateElement: (value) => htmlElement(value, "template"),
+      /** @param {Node | null | undefined} value @returns {value is HTMLHeadElement} */
+      headElement: (value) => htmlElement(value, "head"),
+      /** @param {Node | null | undefined} value @returns {value is HTMLInputElement} */
+      inputElement: (value) => htmlElement(value, "input"),
+      /** @param {Node | null | undefined} value @returns {value is HTMLOptionElement} */
+      optionElement: (value) => htmlElement(value, "option"),
+      /** @param {Node | null | undefined} value @returns {value is HTMLTextAreaElement} */
+      textAreaElement: (value) => htmlElement(value, "textarea"),
+    };
   })();
 
   //=============================================================================
