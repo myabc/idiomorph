@@ -160,6 +160,26 @@ describe("Core morphing tests", function () {
     initial.outerHTML.should.equal(finalSrc);
   });
 
+  it("morphs an SVG-namespace template element recreated by id", function () {
+    let initial = make(`<div><svg><template id="t">Foo</template></svg></div>`);
+    let finalSrc = `<div><section><svg><template id="t">Foo</template></svg></section></div>`;
+    Idiomorph.morph(initial, finalSrc);
+    initial.outerHTML.should.equal(finalSrc);
+  });
+
+  it("does not sync values onto SVG-namespace input and textarea", function () {
+    let calls = [];
+    let src = "<div><svg><input/><textarea>Foo</textarea></svg></div>";
+    Idiomorph.morph(make(src), src, {
+      callbacks: {
+        beforeAttributeUpdated: (attributeName, node, mutationType) => {
+          calls.push([attributeName, node.localName, mutationType]);
+        },
+      },
+    });
+    calls.should.eql([]);
+  });
+
   it("morphs non-HTML-namespace head elements normally", function () {
     let parse = (str) =>
       new DOMParser().parseFromString(str, "text/xml").documentElement;
@@ -174,6 +194,19 @@ describe("Core morphing tests", function () {
     initial.firstChild.firstChild.textContent.should.equal("New");
   });
 
+  it("merges head element from another document", function () {
+    let iframe = document.createElement("iframe");
+    getWorkArea().append(iframe);
+    let foreignDocument = iframe.contentDocument;
+    foreignDocument.head.innerHTML = `<meta name="a"><title>Foo</title>`;
+    let newHead = foreignDocument.createElement("head");
+    newHead.innerHTML = `<title>Foo</title><meta name="a">`;
+    Idiomorph.morph(foreignDocument.head, newHead);
+    foreignDocument.head.innerHTML.should.equal(
+      `<meta name="a"><title>Foo</title>`,
+    );
+  });
+
   it("ignores head element from another document when head.style is none", function () {
     let iframe = document.createElement("iframe");
     getWorkArea().append(iframe);
@@ -185,6 +218,18 @@ describe("Core morphing tests", function () {
       head: { style: "none" },
     });
     foreignDocument.title.should.equal("Old");
+  });
+
+  it("preserves namespaced attributes when newContent is from another document", function () {
+    let initial = make(`<div><svg><use></use></svg></div>`);
+    let final = makeForeign(
+      `<div><svg><use xlink:href="#foo"></use></svg></div>`,
+    );
+    Idiomorph.morph(initial, final);
+    initial
+      .querySelector("use")
+      .getAttributeNS("http://www.w3.org/1999/xlink", "href")
+      .should.equal("#foo");
   });
 
   it("morphs a document from another realm properly", function () {
