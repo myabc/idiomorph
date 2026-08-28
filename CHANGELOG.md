@@ -17,6 +17,7 @@
   * Fix focus restoration never running when `head: { block: true }` defers the morph (@botandrose)
   * Fix `head: {style: 'none'}`, which had silently behaved as `merge` (@botandrose)
   * Throw on an unrecognized `head.style`, rather than silently falling back to `merge` (@botandrose)
+  * Support morphing nodes from other documents, e.g. an iframe's `contentDocument`, which previously threw a TypeError (@lizarusi, @myabc) #156
 
 ## [0.7.4] - 2025-09-29
 
