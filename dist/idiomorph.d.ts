@@ -1,7 +1,6 @@
 export type ConfigHead = {
     style?: "merge" | "append" | "morph" | "none";
     block?: boolean;
-    ignore?: boolean;
     shouldPreserve?: (arg0: Element) => boolean;
     shouldReAppend?: (arg0: Element) => boolean;
     shouldRemove?: (arg0: Element) => boolean;
@@ -28,11 +27,10 @@ export type Config = {
     callbacks?: ConfigCallbacks;
     head?: ConfigHead;
 };
-export type NoOp = Function;
+export type NoOp = () => void;
 export type ConfigHeadInternal = {
     style: "merge" | "append" | "morph" | "none";
     block?: boolean;
-    ignore?: boolean;
     shouldPreserve: ((arg0: Element) => boolean) | NoOp;
     shouldReAppend: ((arg0: Element) => boolean) | NoOp;
     shouldRemove: ((arg0: Element) => boolean) | NoOp;
@@ -59,17 +57,20 @@ export type ConfigInternal = {
     callbacks: ConfigCallbacksInternal;
     head: ConfigHeadInternal;
 };
+export type IdElement = {
+    elt: Element;
+    id: string;
+};
 export type IdSets = {
     persistentIds: Set<string>;
     idMap: Map<Node, Set<string>>;
 };
-export type Morph = Function;
+export type Morph = (oldNode: Node, newContent: Node | HTMLCollection | Node[] | string | null, config?: Config) => Promise<Node[]> | Node[];
 /**
  * @typedef {object} ConfigHead
  *
  * @property {'merge' | 'append' | 'morph' | 'none'} [style]
  * @property {boolean} [block]
- * @property {boolean} [ignore]
  * @property {function(Element): boolean} [shouldPreserve]
  * @property {function(Element): boolean} [shouldReAppend]
  * @property {function(Element): boolean} [shouldRemove]
@@ -97,7 +98,7 @@ export type Morph = Function;
  * @property {ConfigHead} [head]
  */
 /**
- * @typedef {function} NoOp
+ * @callback NoOp
  *
  * @returns {void}
  */
@@ -106,7 +107,6 @@ export type Morph = Function;
  *
  * @property {'merge' | 'append' | 'morph' | 'none'} style
  * @property {boolean} [block]
- * @property {boolean} [ignore]
  * @property {(function(Element): boolean) | NoOp} shouldPreserve
  * @property {(function(Element): boolean) | NoOp} shouldReAppend
  * @property {(function(Element): boolean) | NoOp} shouldRemove
@@ -134,17 +134,22 @@ export type Morph = Function;
  * @property {ConfigHeadInternal} head
  */
 /**
+ * @typedef {Object} IdElement
+ * @property {Element} elt
+ * @property {string} id
+ */
+/**
  * @typedef {Object} IdSets
  * @property {Set<string>} persistentIds
  * @property {Map<Node, Set<string>>} idMap
  */
 /**
- * @typedef {Function} Morph
+ * @callback Morph
  *
- * @param {Element | Document} oldNode
- * @param {Element | Node | HTMLCollection | Node[] | string | null} newContent
+ * @param {Node} oldNode
+ * @param {Node | HTMLCollection | Node[] | string | null} newContent
  * @param {Config} [config]
- * @returns {undefined | Node[]}
+ * @returns {Promise<Node[]> | Node[]}
  */
 /**
  *
