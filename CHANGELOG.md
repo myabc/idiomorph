@@ -18,6 +18,10 @@
   * Fix `head: {style: 'none'}`, which had silently behaved as `merge` (@botandrose)
   * Throw on an unrecognized `head.style`, rather than silently falling back to `merge` (@botandrose)
   * Support morphing nodes from other documents, e.g. an iframe's `contentDocument`, which previously threw a TypeError (@lizarusi, @myabc) #156
+  * Fix morphing another document produces a tree of mixed-realm nodes (@botandrose)
+  * Fix morphing another document loses the element's state (@botandrose)
+  * Fix `ignoreActive` and `ignoreActiveValue` while morphing another document (@botandrose)
+  * Fix pantry morph confusion while morphing another document (@botandrose)
 
 ## [0.7.4] - 2025-09-29
 

@@ -106,6 +106,7 @@ var Idiomorph = (function () {
    *
    * @property {Element} target
    * @property {Element} newContent
+   * @property {Document} doc
    * @property {ConfigInternal} config
    * @property {ConfigInternal['morphStyle']} morphStyle
    * @property {ConfigInternal['ignoreActive']} ignoreActive
@@ -210,11 +211,9 @@ var Idiomorph = (function () {
    */
   function saveAndRestoreFocus(ctx, fn) {
     if (!ctx.config.restoreFocus) return fn();
-    // focus lives in the target's document, which may not be ours
-    const doc = ctx.target.ownerDocument;
     let activeElement =
       /** @type {HTMLInputElement|HTMLTextAreaElement|null} */ (
-        doc.activeElement
+        ctx.doc.activeElement
       );
 
     // don't bother if the active element is not an input or textarea
@@ -230,7 +229,7 @@ var Idiomorph = (function () {
 
     if (
       activeElementId &&
-      activeElementId !== doc.activeElement?.getAttribute("id")
+      activeElementId !== ctx.doc.activeElement?.getAttribute("id")
     ) {
       activeElement = ctx.target.querySelector(
         `[id="${CSS.escape(activeElementId)}"]`,
@@ -370,7 +369,7 @@ var Idiomorph = (function () {
       if (ctx.idMap.has(newChild)) {
         // node has children with ids with possible state so create a dummy elt of same type and apply full morph algorithm
         // createElementNS doesn't case-normalize, so localName rather than tagName
-        const newEmptyChild = document.createElementNS(
+        const newEmptyChild = ctx.doc.createElementNS(
           /** @type {Element} */ (newChild).namespaceURI,
           /** @type {Element} */ (newChild).localName,
         );
@@ -380,7 +379,7 @@ var Idiomorph = (function () {
         return newEmptyChild;
       } else {
         // optimisation: no id state to preserve so we can just insert a clone of the newChild and its descendants
-        const newClonedChild = document.importNode(newChild, true); // importNode to not mutate newParent
+        const newClonedChild = ctx.doc.importNode(newChild, true); // importNode to not mutate newParent
         oldParent.insertBefore(newClonedChild, insertionPoint);
         ctx.callbacks.afterNodeAdded(newClonedChild);
         return newClonedChild;
@@ -515,6 +514,8 @@ var Idiomorph = (function () {
      * @param {Node} node
      */
     function removeNode(ctx, node) {
+      // don't accidentally morph the pantry out of existence when morphing the full document
+      if (node === ctx.pantry) return;
       // are we going to id set match this later?
       if (ctx.idMap.has(node)) {
         // skip callbacks and move to pantry
@@ -634,7 +635,7 @@ var Idiomorph = (function () {
      * @returns {Node | null} the element that ended up in the DOM
      */
     function morphNode(oldNode, newContent, ctx) {
-      if (ctx.ignoreActive && oldNode === document.activeElement) {
+      if (ctx.ignoreActive && oldNode === ctx.doc.activeElement) {
         // don't morph focused element
         return null;
       }
@@ -830,7 +831,7 @@ var Idiomorph = (function () {
       if (
         attr === "value" &&
         ctx.ignoreActiveValue &&
-        element === document.activeElement
+        element === ctx.doc.activeElement
       ) {
         return true;
       }
@@ -848,8 +849,8 @@ var Idiomorph = (function () {
     function ignoreValueOfActiveElement(possibleActiveElement, ctx) {
       return (
         !!ctx.ignoreActiveValue &&
-        possibleActiveElement === document.activeElement &&
-        possibleActiveElement !== document.body
+        possibleActiveElement === ctx.doc.activeElement &&
+        possibleActiveElement !== ctx.doc.body
       );
     }
 
@@ -949,7 +950,7 @@ var Idiomorph = (function () {
     for (const newNode of nodesToAppend) {
       // TODO: This could theoretically be null, based on type
       let newElt = /** @type {ChildNode} */ (
-        document.createRange().createContextualFragment(newNode.outerHTML)
+        ctx.doc.createRange().createContextualFragment(newNode.outerHTML)
           .firstChild
       );
       if (ctx.callbacks.beforeNodeAdded(newElt) !== false) {
@@ -1018,9 +1019,12 @@ var Idiomorph = (function () {
         throw `Do not understand how to morph head style ${headStyle}`;
       }
 
+      const doc = oldNode.ownerDocument;
+
       return {
         target: oldNode,
         newContent: newContent,
+        doc: doc,
         config: mergedConfig,
         morphStyle: morphStyle,
         ignoreActive: mergedConfig.ignoreActive,
@@ -1028,8 +1032,8 @@ var Idiomorph = (function () {
         restoreFocus: mergedConfig.restoreFocus,
         idMap: idMap,
         persistentIds: persistentIds,
-        pantry: createPantry(),
-        activeElementAndParents: createActiveElementAndParents(oldNode),
+        pantry: createPantry(doc),
+        activeElementAndParents: createActiveElementAndParents(oldNode, doc),
         callbacks: mergedConfig.callbacks,
         head: mergedConfig.head,
       };
@@ -1061,23 +1065,25 @@ var Idiomorph = (function () {
     }
 
     /**
+     * @param {Document} doc
      * @returns {HTMLDivElement}
      */
-    function createPantry() {
-      const pantry = document.createElement("div");
+    function createPantry(doc) {
+      const pantry = doc.createElement("div");
       pantry.hidden = true;
-      document.body.insertAdjacentElement("afterend", pantry);
+      doc.documentElement.append(pantry);
       return pantry;
     }
 
     /**
      * @param {Element} oldNode
+     * @param {Document} doc
      * @returns {Element[]}
      */
-    function createActiveElementAndParents(oldNode) {
+    function createActiveElementAndParents(oldNode, doc) {
       /** @type {Element[]} */
       let activeElementAndParents = [];
-      let elt = document.activeElement;
+      let elt = doc.activeElement;
       if (elt?.tagName !== "BODY" && oldNode.contains(elt)) {
         while (elt) {
           activeElementAndParents.push(elt);
