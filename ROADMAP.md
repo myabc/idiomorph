@@ -13,18 +13,19 @@ This document outlines the development roadmap for Idiomorph. It provides a high
 ### 0.8.0
 - [x] Remove AMD dist target
 - [x] Remove CommonJS dist target https://github.com/bigskysoftware/idiomorph/issues/122
+- [x] Warn if duplicate ids are detected in the new content https://github.com/bigskysoftware/idiomorph/issues/141
+- [x] Publish TypeScript declarations https://github.com/bigskysoftware/idiomorph/issues/152
+
+### 0.9.0
 - [ ] Plugin system? https://github.com/bigskysoftware/idiomorph/issues/109
+- [ ] Settle input value semantics, and the subtree-skipping speedup they unblock https://github.com/bigskysoftware/idiomorph/issues/144
+- [ ] Restore or preserve scroll state? https://github.com/bigskysoftware/idiomorph/issues/26
+- [ ] Improve anonymous node matching, perhaps using Merkle trees, or fuzzy synthetic ids? https://github.com/bigskysoftware/idiomorph/issues/143
 - [ ] Move idiomorph/htmx.js out of tree into an htmx extension? https://github.com/bigskysoftware/idiomorph/issues/111
 - [ ] Narrow support for `newContent` types? https://github.com/bigskysoftware/idiomorph/issues/103
-- [ ] Warn if duplicate ids are detected in the new content
-- [ ] Restore or preserve scroll state? https://github.com/bigskysoftware/idiomorph/issues/26
-- [ ] Improve anonymous node matching, perhaps using Merkle trees, or fuzzy synthetic ids?
 - [ ] Natively preserve focus, selection, scroll state by morphing around currently focused element https://github.com/bigskysoftware/idiomorph/pull/85
 - [ ] Can we improve the iframe morphing situation without `moveBefore`?
 
-### 1.0.0
-- [ ] Performance improvements
-
-### 2.0.0 (when `Element#moveBefore` is widely available)
+### 1.0.0 (when `Element#moveBefore` is widely available)
 - [ ] Remove all pre-`moveBefore` workarounds
 

@@ -7,13 +7,20 @@
   * Remove CommonJS publish target. `require("idiomorph")` no longer resolves; use `import "idiomorph"` instead. (@botandrose) #122
   * Remove the undocumented `head.ignore` option in favour of `head: {style: 'none'}`, which the README has always documented (@botandrose)
 
+* Changed:
+  * `morph()` now accepts any `Node` as its first argument, rather than only an `Element` or `Document`. Passing a node that cannot have children with `morphStyle: 'innerHTML'` now throws instead of failing obscurely (@botandrose, @lizarusi) #155
+  * The package is now declared ESM via `"type": "module"`, so `import "idiomorph"` resolves without relying on Node's module syntax detection (@myabc)
+
 * Added:
+  * Publish TypeScript declarations, generated from the JSDoc types already in the source (@myabc) #152
   * Warn in the console when duplicate ids are detected during a morph, since they can cause subtle state loss (@botandrose) #142
 
 * Fixed:
   * Fix TypeError when restoring focus to an element that doesn't support text selection (@emaia) #150
   * Skip the `beforeAttributeUpdated` callback when an attribute's value is unchanged (@monorkin) #149
   * Preserve the namespace of recreated elements, so SVG and MathML content containing persistent ids is no longer rebuilt as HTML (@guoliu, @botandrose) #154
+  * Morph namespaced attributes such as `xlink:href`, and attribute names that `setAttribute` rejects such as Alpine's `@click` or Vue's `:class`, which previously lost their namespace or threw an `InvalidCharacterError` (@botandrose) #147
+  * Fix TypeError when morphing a text or comment node via `outerHTML` (@lizarusi) #155
   * Fix focus restoration never running when `head: { block: true }` defers the morph (@botandrose)
   * Fix `head: {style: 'none'}`, which had silently behaved as `merge` (@botandrose)
   * Throw on an unrecognized `head.style`, rather than silently falling back to `merge` (@botandrose)
@@ -22,6 +29,11 @@
   * Fix morphing another document loses the element's state (@botandrose)
   * Fix `ignoreActive` and `ignoreActiveValue` while morphing another document (@botandrose)
   * Fix pantry morph confusion while morphing another document (@botandrose)
+  * Escape ids before using them in attribute selectors, so ids containing CSS-special characters no longer break matching (@botandrose)
+  * Ignore empty ids when computing the persistent id set (@botandrose)
+  * Strip the doctype when parsing new content, so morphing a full document no longer throws (@botandrose)
+  * Read `id` and `tagName` off the element itself, so form controls containing fields named `id` or `tagName` cannot shadow them (@botandrose)
+  * Read each id once when building the id set, instead of twice downstream, for a small perf win (@botandrose)
 
 ## [0.7.4] - 2025-09-29
 

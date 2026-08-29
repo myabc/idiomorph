@@ -38,11 +38,11 @@ A testimonial:
 
 ## Installing
 
-Idiomorph is a small (3.3k min/gz'd), dependency free JavaScript library.  The `/dist/idiomorph.js` file can be included
+Idiomorph is a small (3.7k min/gz'd), dependency free JavaScript library.  The `/dist/idiomorph.js` file can be included
 directly in a browser:
 
 ```html
-<script src="https://unpkg.com/idiomorph@0.7.4"></script>
+<script src="https://unpkg.com/idiomorph@0.8.0"></script>
 ```
 
 For production systems we recommend either downloading and vendoring the library, or importing via NPM and ESM:
@@ -50,6 +50,8 @@ For production systems we recommend either downloading and vendoring the library
 ```js
 import { Idiomorph } from "idiomorph";
 ```
+
+TypeScript declarations ship with the package, so no separate `@types` install is needed.
 
 ## Usage
 
