@@ -43,6 +43,35 @@ describe("Option to forcibly restore focus after morph", function () {
       focused.selectionEnd.should.equal(2);
     });
 
+    it("restores focus and selection state when the target form shadows ownerDocument", function () {
+      // a <form> is [LegacyOverrideBuiltIns]: a named control installs an own
+      // property that shadows Node.prototype.ownerDocument
+      let form = make(`<form></form>`);
+      getWorkArea().append(form);
+      form.innerHTML = `<input name="ownerDocument">
+        <div id="left"><input type="text" id="focused" value="abc"></div>
+        <div id="right"><input type="text" id="other"></div>`;
+      for (const elt of form.querySelectorAll("input")) {
+        elt.parentElement.moveBefore = undefined;
+      }
+      let input = document.getElementById("focused");
+      input.focus();
+      input.setSelectionRange(1, 2);
+
+      Idiomorph.morph(
+        form,
+        `<input name="ownerDocument">
+        <div id="left"><input type="text" id="other"></div>
+        <div id="right"><input type="text" id="focused" value="abc"></div>`,
+        { morphStyle: "innerHTML" },
+      );
+
+      let focused = document.getElementById("focused");
+      (document.activeElement === focused).should.equal(true);
+      focused.selectionStart.should.equal(1);
+      focused.selectionEnd.should.equal(2);
+    });
+
     it("restores focus and selection state with outerHTML morphStyle", function () {
       const div = make(`
         <div>

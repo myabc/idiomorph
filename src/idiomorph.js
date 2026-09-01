@@ -1019,7 +1019,7 @@ var Idiomorph = (function () {
         throw `Do not understand how to morph head style ${headStyle}`;
       }
 
-      const doc = oldNode.ownerDocument;
+      const doc = ownerDocumentOf(oldNode);
 
       return {
         target: oldNode,
@@ -1451,6 +1451,22 @@ var Idiomorph = (function () {
       textAreaElement: (value) => htmlElement(value, "textarea"),
     };
   })();
+
+  /**
+   * `<form>` is [LegacyOverrideBuiltIns], so a named control such as
+   * `<input name="ownerDocument">` installs an own property on the form that
+   * shadows `Node.prototype.ownerDocument`. Read through the prototype getter
+   * instead, which is also realm-safe: it brand-checks the internal slot
+   * rather than the realm the node was created in.
+   */
+  const ownerDocumentGetter = /** @type {() => Document} */ (
+    /** @type {PropertyDescriptor} */ (
+      Object.getOwnPropertyDescriptor(Node.prototype, "ownerDocument")
+    ).get
+  );
+
+  /** @param {Node} node @returns {Document} */
+  const ownerDocumentOf = (node) => ownerDocumentGetter.call(node);
 
   //=============================================================================
   // This is what ends up becoming the Idiomorph global object
