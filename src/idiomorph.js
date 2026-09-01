@@ -1420,6 +1420,15 @@ var Idiomorph = (function () {
   //=============================================================================
   // Realm-safe node type checks
   //=============================================================================
+  /**
+   * `instanceof Node` (and friends) fails for nodes created in another JS realm
+   * (e.g. an iframe's document), even after they are adopted into this
+   * document, because each realm has its own constructors. These helpers fall
+   * back to duck-typing via `nodeType` and `localName`, so nodes from any realm
+   * are recognized. `instanceof` is still tried first, because duck-typing is
+   * itself shadowable: a `<form>` is [LegacyOverrideBuiltIns], so a control
+   * named `nodeType` installs an own property that hides the real one.
+   */
   const is = (function () {
     /** @param {Node | null | undefined} value @returns {value is Element} */
     const element = (value) =>
