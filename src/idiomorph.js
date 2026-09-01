@@ -494,8 +494,8 @@ var Idiomorph = (function () {
           // We'll still match an anonymous node with an IDed newElt, though, because if it got this far,
           // its not persistent, and new nodes can't have any hidden state.
           // We can't use .id because of form input shadowing, and we can't count on .getAttribute's presence because it could be a document-fragment
-          (!oldElt.getAttribute?.("id") ||
-            oldElt.getAttribute?.("id") === newElt.getAttribute?.("id"))
+          (!idAttributeOf(oldElt) ||
+            idAttributeOf(oldElt) === idAttributeOf(newElt))
         );
       }
 
@@ -564,7 +564,7 @@ var Idiomorph = (function () {
         (
           // ctx.target.id unsafe because of form input shadowing
           // ctx.target could be a document fragment which doesn't have `getAttribute`
-          (ctx.target.getAttribute?.("id") === id && ctx.target) ||
+          (idAttributeOf(ctx.target) === id && ctx.target) ||
             ctx.target.querySelector(selector) ||
             ctx.pantry.querySelector(selector)
         );
@@ -1104,15 +1104,20 @@ var Idiomorph = (function () {
     function findIdElements(root) {
       /** @type {IdElement[]} */
       let elements = [];
-      // root could be a text or comment node which has no `querySelectorAll`,
-      // or a document fragment which has no `getAttribute`
+      // an Element's own `querySelectorAll` is unsafe because of form input
+      // shadowing, so it is called off the prototype; the root could also be a
+      // text or comment node, which genuinely has none, or a document or
+      // fragment, whose own method cannot be shadowed
       const rootElt = /** @type {Partial<Element>} */ (root);
-      for (const elt of rootElt.querySelectorAll?.("[id]") ?? []) {
+      const idElts = is.element(root)
+        ? querySelectorAll.call(root, "[id]")
+        : (rootElt.querySelectorAll?.("[id]") ?? []);
+      for (const elt of idElts) {
         // elt.id is unsafe because of form input shadowing, and `id=""` is not persistable
-        const id = elt.getAttribute("id");
+        const id = getAttribute.call(elt, "id");
         if (id) elements.push({ elt, id });
       }
-      const rootId = rootElt.getAttribute?.("id");
+      const rootId = idAttributeOf(root);
       if (rootId)
         elements.push({ elt: /** @type {Element} */ (root), id: rootId });
       return elements;
@@ -1472,6 +1477,24 @@ var Idiomorph = (function () {
     );
     return ownerDocumentGetter.call(node);
   };
+
+  /**
+   * `<form>` shadowing applies to methods too: a control named
+   * `querySelectorAll` or `getAttribute` hides the real method, so these are
+   * read off `Element.prototype` once. They are realm-safe for the same reason
+   * the `ownerDocument` getter is.
+   */
+  const { querySelectorAll, getAttribute } = Element.prototype;
+
+  /**
+   * Reads a node's `id` attribute. `node.id` is shadowed by a form control
+   * named `id`, and `node.getAttribute` by one named `getAttribute`; the node
+   * may also be a text, comment or fragment node, which has no id at all.
+   * @param {Node} node
+   * @returns {string | null}
+   */
+  const idAttributeOf = (node) =>
+    is.element(node) ? getAttribute.call(node, "id") : null;
 
   //=============================================================================
   // This is what ends up becoming the Idiomorph global object

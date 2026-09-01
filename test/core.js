@@ -328,6 +328,18 @@ describe("Core morphing tests", function () {
     getWorkArea().querySelector("form").should.equal(form);
   });
 
+  it("can morph a form root whose control shadows querySelectorAll", function () {
+    let initial = make(
+      `<form id="f"><input name="querySelectorAll"><span id="s">Foo</span></form>`,
+    );
+    getWorkArea().append(initial);
+    Idiomorph.morph(
+      initial,
+      `<form id="f"><input name="querySelectorAll"><span id="s">Bar</span></form>`,
+    );
+    initial.querySelector("span").innerHTML.should.equal("Bar");
+  });
+
   it("ignores active element when ignoreActive set to true", function () {
     let initialSource = "<div><div id='d1'>Foo</div><input id='i1'></div>";
     getWorkArea().innerHTML = initialSource;
