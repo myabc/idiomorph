@@ -43,25 +43,6 @@ describe("Option to forcibly restore focus after morph", function () {
       focused.selectionEnd.should.equal(2);
     });
 
-    it("preserves focus algorithmically when morphing inside another document", function () {
-      let iframe = document.createElement("iframe");
-      getWorkArea().append(iframe);
-      let doc = iframe.contentDocument;
-      doc.body.innerHTML = `<div><input type="text" id="focused" value="abc"><input type="text" id="other"></div>`;
-      let focused = doc.getElementById("focused");
-      focused.parentElement.moveBefore = undefined;
-      focused.focus();
-      (doc.activeElement === focused).should.equal(true);
-
-      Idiomorph.morph(
-        doc.body,
-        `<div><input type="text" id="other"><input type="text" id="focused" value="abc"></div>`,
-        { morphStyle: "innerHTML", restoreFocus: false },
-      );
-
-      (doc.activeElement === focused).should.equal(true);
-    });
-
     it("restores focus and selection state when the target form shadows ownerDocument", function () {
       // a <form> is [LegacyOverrideBuiltIns]: a named control installs an own
       // property that shadows Node.prototype.ownerDocument

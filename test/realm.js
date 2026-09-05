@@ -261,6 +261,7 @@ describe("Cross-realm morphing tests", function () {
       { ignoreActiveValue: true },
     );
     input.value.should.equal("user typed");
+    input.getAttribute("value").should.equal("server");
   });
 
   it("honors ignoreActive for the target document's active element", function () {
@@ -275,5 +276,37 @@ describe("Cross-realm morphing tests", function () {
       { ignoreActive: true },
     );
     input.className.should.equal("old");
+  });
+
+  it("ignores the active textarea's value in the target's document when ignoreActiveValue is set", function () {
+    let doc = makeIframe().contentDocument;
+    doc.body.innerHTML = "<textarea id='t1'>server1</textarea>";
+    let t1 = doc.getElementById("t1");
+    t1.focus();
+    t1.value = "typed-by-user";
+    (doc.activeElement === t1).should.equal(true);
+    Idiomorph.morph(t1, "<textarea id='t1' class='c'>server2</textarea>", {
+      morphStyle: "outerHTML",
+      ignoreActiveValue: true,
+    });
+    t1.value.should.equal("typed-by-user");
+    t1.classList.value.should.equal("c");
+  });
+
+  it("preserves focus algorithmically when morphing inside another document", function () {
+    let doc = makeIframe().contentDocument;
+    doc.body.innerHTML = `<div><input type="text" id="focused" value="abc"><input type="text" id="other"></div>`;
+    let focused = doc.getElementById("focused");
+    focused.parentElement.moveBefore = undefined;
+    focused.focus();
+    (doc.activeElement === focused).should.equal(true);
+
+    Idiomorph.morph(
+      doc.body,
+      `<div><input type="text" id="other"><input type="text" id="focused" value="abc"></div>`,
+      { morphStyle: "innerHTML", restoreFocus: false },
+    );
+
+    (doc.activeElement === focused).should.equal(true);
   });
 });

@@ -10,12 +10,6 @@ describe("Core morphing tests", function () {
   });
 
   setup();
-  function makeForeignDocument() {
-    let iframe = document.createElement("iframe");
-    getWorkArea().append(iframe);
-    return iframe.contentDocument;
-  }
-
   it("morphs outerHTML by default", function () {
     let initial = make("<button>Foo</button>");
     let finalSrc = "<button>Bar</button>";
@@ -368,51 +362,6 @@ describe("Core morphing tests", function () {
     });
     d1.innerText.should.equal("Bar");
     i1.value.should.equal("asdf");
-  });
-
-  it("ignores the active element of the target's document when ignoreActive is set", function () {
-    let doc = makeForeignDocument();
-    doc.body.innerHTML = "<div id='d1'>Foo</div><input id='i1' data-keep='1'>";
-    let i1 = doc.getElementById("i1");
-    i1.focus();
-    (doc.activeElement === i1).should.equal(true);
-    Idiomorph.morph(doc.body, "<div id='d1'>Bar</div><input id='i1'>", {
-      morphStyle: "innerHTML",
-      ignoreActive: true,
-    });
-    doc.getElementById("d1").innerHTML.should.equal("Bar");
-    i1.outerHTML.should.equal('<input id="i1" data-keep="1">');
-  });
-
-  it("ignores the active input's value in the target's document when ignoreActiveValue is set", function () {
-    let doc = makeForeignDocument();
-    doc.body.innerHTML = "<input id='i1' value='server1'>";
-    let i1 = doc.getElementById("i1");
-    i1.focus();
-    i1.value = "typed-by-user";
-    (doc.activeElement === i1).should.equal(true);
-    Idiomorph.morph(i1, "<input id='i1' class='c' value='server2'>", {
-      morphStyle: "outerHTML",
-      ignoreActiveValue: true,
-    });
-    i1.value.should.equal("typed-by-user");
-    i1.getAttribute("value").should.equal("server1");
-    i1.classList.value.should.equal("c");
-  });
-
-  it("ignores the active textarea's value in the target's document when ignoreActiveValue is set", function () {
-    let doc = makeForeignDocument();
-    doc.body.innerHTML = "<textarea id='t1'>server1</textarea>";
-    let t1 = doc.getElementById("t1");
-    t1.focus();
-    t1.value = "typed-by-user";
-    (doc.activeElement === t1).should.equal(true);
-    Idiomorph.morph(t1, "<textarea id='t1' class='c'>server2</textarea>", {
-      morphStyle: "outerHTML",
-      ignoreActiveValue: true,
-    });
-    t1.value.should.equal("typed-by-user");
-    t1.classList.value.should.equal("c");
   });
 
   it("can morph a body tag properly", function () {
