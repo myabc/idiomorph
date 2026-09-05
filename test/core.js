@@ -1,4 +1,60 @@
 describe("Core morphing tests", function () {
+  it("restores focus when the target form shadows querySelector", function () {
+    let form = make(
+      `<form><input name="querySelector"><div id="left"><input id="focused" value="abc"></div><div id="right"></div></form>`,
+    );
+    getWorkArea().append(form);
+    let input = form.querySelectorAll("#focused")[0];
+    input.parentElement.moveBefore = undefined;
+    form.querySelectorAll("#right")[0].moveBefore = undefined;
+    input.focus();
+    (document.activeElement === input).should.equal(true);
+    input.setSelectionRange(1, 2);
+    Idiomorph.morph(
+      form,
+      `<input name="querySelector"><div id="left"></div><div id="right"><input id="focused" value="abc"></div>`,
+      { morphStyle: "innerHTML" },
+    );
+    (document.activeElement === input).should.equal(true);
+    input.selectionStart.should.equal(1);
+    input.selectionEnd.should.equal(2);
+  });
+
+  it("moves an IDed descendant when the target form shadows querySelector", function () {
+    let form = make(
+      `<form><input name="querySelector"><div id="left"><span id="s">Old</span></div><div id="right"></div></form>`,
+    );
+    let span = form.querySelectorAll("span")[0];
+    Idiomorph.morph(
+      form,
+      `<input name="querySelector"><div id="left"></div><div id="right"><span id="s">New</span></div>`,
+      { morphStyle: "innerHTML" },
+    );
+    (form.querySelectorAll("#right > span")[0] === span).should.equal(true);
+    span.textContent.should.equal("New");
+  });
+
+  for (const shadowedSide of ["old", "new"]) {
+    it(`moves an IDed form when the ${shadowedSide} form shadows getAttribute`, function () {
+      let control = '<input name="getAttribute">';
+      let root = make(
+        `<div><section id="left"><form id="f">${shadowedSide === "old" ? control : ""}</form></section><section id="right"></section></div>`,
+      );
+      let form = root.querySelector("form");
+      Idiomorph.morph(
+        root,
+        `<section id="left"></section><section id="right"><form id="f">${shadowedSide === "new" ? control : ""}</form></section>`,
+        {
+          morphStyle: "innerHTML",
+          // Exercise ID movement without entering the separate attribute-sync path.
+          callbacks: { beforeNodeMorphed: (node) => node !== form },
+        },
+      );
+      (root.querySelector("#right > form") === form).should.equal(true);
+      root.querySelector("#left").children.length.should.equal(0);
+    });
+  }
+
   it("can load before DOM constructors are available", async function () {
     const source = await (await fetch("/src/idiomorph.js")).text();
     const load = new Function(

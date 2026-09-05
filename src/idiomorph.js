@@ -231,8 +231,8 @@ var Idiomorph = (function () {
       activeElementId &&
       activeElementId !== ctx.doc.activeElement?.getAttribute("id")
     ) {
-      activeElement = ctx.target.querySelector(
-        `[id="${CSS.escape(activeElementId)}"]`,
+      activeElement = /** @type {HTMLInputElement|HTMLTextAreaElement|null} */ (
+        querySelectorFrom(ctx.target, `[id="${CSS.escape(activeElementId)}"]`)
       );
       activeElement?.focus();
     }
@@ -316,9 +316,7 @@ var Idiomorph = (function () {
         // if the matching node is elsewhere in the original content
         if (is.element(newChild)) {
           // we can pretend the id is non-null because the next `.has` line will reject it if not
-          const newChildId = /** @type {String} */ (
-            newChild.getAttribute("id")
-          );
+          const newChildId = /** @type {String} */ (idAttributeOf(newChild));
           if (ctx.persistentIds.has(newChildId)) {
             // move it and all its children here and morph
             const movedChild = moveBeforeById(
@@ -565,7 +563,7 @@ var Idiomorph = (function () {
           // ctx.target.id unsafe because of form input shadowing
           // ctx.target could be a document fragment which doesn't have `getAttribute`
           (idAttributeOf(ctx.target) === id && ctx.target) ||
-            ctx.target.querySelector(selector) ||
+            querySelectorFrom(ctx.target, selector) ||
             ctx.pantry.querySelector(selector)
         );
       removeElementFromAncestorsIdMaps(target, ctx);
@@ -583,7 +581,7 @@ var Idiomorph = (function () {
      */
     function removeElementFromAncestorsIdMaps(element, ctx) {
       // we know id is non-null String, because this function is only called on elements with ids
-      const id = /** @type {String} */ (element.getAttribute("id"));
+      const id = /** @type {String} */ (idAttributeOf(element));
       /** @ts-ignore - safe to loop in this way **/
       while ((element = element.parentNode)) {
         let idSet = ctx.idMap.get(element);
@@ -1107,7 +1105,7 @@ var Idiomorph = (function () {
       // an Element's own `querySelectorAll` is unsafe because of form input
       // shadowing, so it is called off the prototype; the root could also be a
       // text or comment node, which genuinely has none, or a document or
-      // fragment, whose own method cannot be shadowed
+      // fragment, which are not subject to form named-property shadowing
       const rootElt = /** @type {Partial<Element>} */ (root);
       const idElts = is.element(root)
         ? (querySelectorAll ??= Element.prototype.querySelectorAll).call(
@@ -1492,14 +1490,26 @@ var Idiomorph = (function () {
 
   /**
    * `<form>` shadowing applies to methods too: a control named
-   * `querySelectorAll` or `getAttribute` hides the real method, so these are
-   * read off `Element.prototype` on first use. They are realm-safe for the
+   * `querySelector`, `querySelectorAll` or `getAttribute` hides the real method.
+   * Read these off `Element.prototype` on first use. They are realm-safe for the
    * same reason the `ownerDocument` getter is.
    */
   /** @type {Element['querySelectorAll'] | undefined} */
   let querySelectorAll;
+  /** @type {Element['querySelector'] | undefined} */
+  let querySelector;
   /** @type {Element['getAttribute'] | undefined} */
   let getAttribute;
+
+  /**
+   * @param {Element | DocumentFragment} root
+   * @param {string} selector
+   * @returns {Element | null}
+   */
+  const querySelectorFrom = (root, selector) =>
+    is.element(root)
+      ? (querySelector ??= Element.prototype.querySelector).call(root, selector)
+      : root.querySelector(selector);
 
   /**
    * Reads a node's `id` attribute. `node.id` is shadowed by a form control
