@@ -1110,11 +1110,14 @@ var Idiomorph = (function () {
       // fragment, whose own method cannot be shadowed
       const rootElt = /** @type {Partial<Element>} */ (root);
       const idElts = is.element(root)
-        ? querySelectorAll.call(root, "[id]")
+        ? (querySelectorAll ??= Element.prototype.querySelectorAll).call(
+            root,
+            "[id]",
+          )
         : (rootElt.querySelectorAll?.("[id]") ?? []);
       for (const elt of idElts) {
         // elt.id is unsafe because of form input shadowing, and `id=""` is not persistable
-        const id = getAttribute.call(elt, "id");
+        const id = idAttributeOf(elt);
         if (id) elements.push({ elt, id });
       }
       const rootId = idAttributeOf(root);
@@ -1490,10 +1493,13 @@ var Idiomorph = (function () {
   /**
    * `<form>` shadowing applies to methods too: a control named
    * `querySelectorAll` or `getAttribute` hides the real method, so these are
-   * read off `Element.prototype` once. They are realm-safe for the same reason
-   * the `ownerDocument` getter is.
+   * read off `Element.prototype` on first use. They are realm-safe for the
+   * same reason the `ownerDocument` getter is.
    */
-  const { querySelectorAll, getAttribute } = Element.prototype;
+  /** @type {Element['querySelectorAll'] | undefined} */
+  let querySelectorAll;
+  /** @type {Element['getAttribute'] | undefined} */
+  let getAttribute;
 
   /**
    * Reads a node's `id` attribute. `node.id` is shadowed by a form control
@@ -1503,7 +1509,9 @@ var Idiomorph = (function () {
    * @returns {string | null}
    */
   const idAttributeOf = (node) =>
-    is.element(node) ? getAttribute.call(node, "id") : null;
+    is.element(node)
+      ? (getAttribute ??= Element.prototype.getAttribute).call(node, "id")
+      : null;
 
   //=============================================================================
   // This is what ends up becoming the Idiomorph global object

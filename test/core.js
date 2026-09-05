@@ -340,6 +340,20 @@ describe("Core morphing tests", function () {
     initial.querySelector("span").innerHTML.should.equal("Bar");
   });
 
+  it("can morph children of a form whose control shadows getAttribute", function () {
+    let initial = make(
+      `<form id="f"><input name="getAttribute"><span id="s">Foo</span></form>`,
+    );
+    let span = initial.querySelector("span");
+    Idiomorph.morph(
+      initial,
+      `<input name="getAttribute"><span id="s">Bar</span>`,
+      { morphStyle: "innerHTML" },
+    );
+    (initial.querySelector("span") === span).should.equal(true);
+    span.innerHTML.should.equal("Bar");
+  });
+
   it("ignores active element when ignoreActive set to true", function () {
     let initialSource = "<div><div id='d1'>Foo</div><input id='i1'></div>";
     getWorkArea().innerHTML = initialSource;
@@ -382,6 +396,7 @@ describe("Core morphing tests", function () {
       ignoreActiveValue: true,
     });
     i1.value.should.equal("typed-by-user");
+    i1.getAttribute("value").should.equal("server1");
     i1.classList.value.should.equal("c");
   });
 
