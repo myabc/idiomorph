@@ -14,6 +14,67 @@ describe("skipUnchanged option", function () {
     };
   }
 
+  describe("differential form-state regressions", function () {
+    // Keep these enabled while the implementation is parked: equal markup is
+    // not enough to prove that skipping preserves the normal morph's behavior.
+    function morphAndSnapshot(oldHTML, newHTML, skipUnchanged, prepare) {
+      const workArea = getWorkArea();
+      // Radio coupling requires a connected tree. Run fixtures sequentially so
+      // same-name radios from the baseline cannot affect the candidate run.
+      workArea.innerHTML = oldHTML;
+      const root = workArea.firstElementChild;
+      try {
+        if (prepare) prepare(root);
+        Idiomorph.morph(root, newHTML, { skipUnchanged });
+        return {
+          html: root.outerHTML,
+          inputs: Array.from(root.querySelectorAll("input"), (input) => ({
+            value: input.value,
+            checked: input.checked,
+          })),
+          selects: Array.from(root.querySelectorAll("select"), (select) => ({
+            value: select.value,
+            selectedIndex: select.selectedIndex,
+          })),
+          options: Array.from(root.querySelectorAll("option"), (option) => ({
+            value: option.value,
+            selected: option.selected,
+            defaultSelected: option.defaultSelected,
+          })),
+        };
+      } finally {
+        clearWorkArea();
+      }
+    }
+
+    function assertSameMorph(oldHTML, newHTML, prepare) {
+      const baseline = morphAndSnapshot(oldHTML, newHTML, false, prepare);
+      const skipped = morphAndSnapshot(oldHTML, newHTML, true, prepare);
+      skipped.should.eql(baseline);
+    }
+
+    it("matches normal morphing when a radio changes a later subtree's checked state", function () {
+      assertSameMorph(
+        `<div><section><input type="radio" name="group" value="a"></section><section><input type="radio" name="group" value="b" checked></section></div>`,
+        `<div><section><input type="radio" name="group" value="a" checked></section><section><input type="radio" name="group" value="b" checked></section></div>`,
+      );
+    });
+
+    it("matches normal morphing when implicit selection crosses an unchanged optgroup", function () {
+      assertSameMorph(
+        `<div><select><optgroup><option>A</option></optgroup><option selected>B</option></select></div>`,
+        `<div><select><optgroup><option>A</option></optgroup><option>B</option></select></div>`,
+      );
+    });
+
+    it("matches normal morphing of a dirty all-disabled select", function () {
+      const html = `<div><select><option disabled>A</option><option disabled>B</option></select></div>`;
+      assertSameMorph(html, html, (root) => {
+        root.querySelector("select").selectedIndex = 0;
+      });
+    });
+  });
+
   describe("off by default", function () {
     it("still visits every node of an identical subtree", function () {
       const calls = [];
