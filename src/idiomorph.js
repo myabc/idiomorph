@@ -1459,13 +1459,13 @@ var Idiomorph = (function () {
    * instead, which is also realm-safe: it brand-checks the internal slot
    * rather than the realm the node was created in.
    */
-  /** @type {(() => Document) | undefined} */
+  /** @type {((this: Node) => Document) | undefined} */
   let ownerDocumentGetter;
 
   /** @param {Node} node @returns {Document} */
   const ownerDocumentOf = (node) => {
     // Resolve lazily so importing the module does not require a DOM.
-    ownerDocumentGetter ??= /** @type {() => Document} */ (
+    ownerDocumentGetter ??= /** @type {(this: Node) => Document} */ (
       /** @type {PropertyDescriptor} */ (
         Object.getOwnPropertyDescriptor(Node.prototype, "ownerDocument")
       ).get
