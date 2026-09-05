@@ -1,4 +1,14 @@
 describe("Core morphing tests", function () {
+  it("can load before DOM constructors are available", async function () {
+    const source = await (await fetch("/src/idiomorph.js")).text();
+    const load = new Function(
+      "Node",
+      "Element",
+      source + "; return Idiomorph;",
+    );
+    load(undefined, undefined).morph.should.be.a("function");
+  });
+
   setup();
   it("morphs outerHTML by default", function () {
     let initial = make("<button>Foo</button>");
